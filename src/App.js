@@ -25,7 +25,7 @@ export default function Board() {
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
-    // Copy the current squares array to avoid direct mutation.
+    // Copy the current squares array to avoid direct mutation and change the object.
     const nextSquares = squares.slice();
     // Set the current square to 'X' or 'O' based on whose turn it is.
     if (xIsNext) {
@@ -40,10 +40,12 @@ export default function Board() {
 
   // Calculate if there's a winner using the helper function.
   const winner = calculateWinner(squares);
-  // Determine the game status message based on whether there's a winner.
   let status;
   if (winner) {
     status = "Winner: " + winner;
+  } else if (squares.every((square) => square)) {
+    // Check if all squares are filled.
+    status = "No Winner: It's a tie!";
   } else {
     status = "Next player: " + (xIsNext ? "X" : "O");
   }
