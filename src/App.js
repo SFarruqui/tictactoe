@@ -1,54 +1,34 @@
-// Import useState hook from React.
-import { useState } from "react";
+import { useState } from 'react';
 
-// Define a functional component Square that takes value and a click handler as props.
+// Square component representing each cell in the tic-tac-toe grid
 function Square({ value, onSquareClick }) {
-  // Returns a button element with the provided value and click handler.
   return (
     <button className="square" onClick={onSquareClick}>
-      {value}
+      {value} {/* Display the value (either 'X', 'O', or null) */}
     </button>
   );
 }
 
-// Define the main Board functional component.
-export default function Board() {
-  // Set up local state for determining if it's X's turn, and initialize with true (X goes first).
-  const [xIsNext, setXIsNext] = useState(true);
-
-  // Set up local state for tracking the game board's state, and initialize with an array of 9 null values.
-  const [squares, setSquares] = useState(Array(9).fill(null));
-
-  // Define a function that handles the game logic when a square is clicked.
+// Board component to display the game board
+function Board({ xIsNext, squares, onPlay }) {
+  // Handles click on each square
   function handleClick(i) {
-    // If there's already a winner or the current square is already filled, do nothing.
+    // Ignore the click if game already has a winner or square is already filled
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
-    // Copy the current squares array to avoid direct mutation and change the object.
+    // Create a shallow copy of squares array
     const nextSquares = squares.slice();
-    // Set the current square to 'X' or 'O' based on whose turn it is.
-    if (xIsNext) {
-      nextSquares[i] = "X";
-    } else {
-      nextSquares[i] = "O";
-    }
-    // Update the squares state and toggle the turn.
-    setSquares(nextSquares);
-    setXIsNext(!xIsNext);
+    // Assign 'X' or 'O' based on whose turn it is
+    nextSquares[i] = xIsNext ? 'X' : 'O';
+    // Trigger the play action with updated squares
+    onPlay(nextSquares);
   }
 
-  // Calculate if there's a winner using the helper function.
+  // Determine if there is a winner
   const winner = calculateWinner(squares);
-  let status;
-  if (winner) {
-    status = "Winner: " + winner;
-  } else if (squares.every((square) => square)) {
-    // Check if all squares are filled.
-    status = "No Winner: It's a tie!";
-  } else {
-    status = "Next player: " + (xIsNext ? "X" : "O");
-  }
+  // Status message display
+  let status = winner ? 'Winner: ' + winner : 'Next player: ' + (xIsNext ? 'X' : 'O');
 
   // Render the game board with 9 squares and display the game status.
   return (
@@ -73,9 +53,54 @@ export default function Board() {
   );
 }
 
-// Helper function that checks for a winner based on predefined winning combinations.
+// Main game component
+export default function Game() {
+  // Game state including history of moves
+  const [history, setHistory] = useState([Array(9).fill(null)]);
+  const [currentMove, setCurrentMove] = useState(0);
+  // Determine whose turn is next
+  const xIsNext = currentMove % 2 === 0;
+  // Current state of the game board
+  const currentSquares = history[currentMove];
+
+  // Handle the play and update game history
+  function handlePlay(nextSquares) {
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+    setHistory(nextHistory);
+    setCurrentMove(nextHistory.length - 1);
+  }
+
+  // Function to jump to a specific past move
+  function jumpTo(nextMove) {
+    setCurrentMove(nextMove);
+  }
+
+  // Create list of moves for navigation
+  const moves = history.map((squares, move) => {
+    const description = move > 0 ? 'Go to move #' + move : 'Go to game start';
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    );
+  });
+
+  // Render the game board and moves navigation
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+      </div>
+      <div className="game-info">
+        <ol>{moves}</ol>
+      </div>
+    </div>
+  );
+}
+
+// Function to calculate the winner of the game
 function calculateWinner(squares) {
-  // Define possible winning line combinations.
+  // Possible winning combinations
   const lines = [
     // Rows, columns, and diagonals.
     [0, 1, 2],
@@ -87,14 +112,15 @@ function calculateWinner(squares) {
     [0, 4, 8],
     [2, 4, 6],
   ];
-  // Loop through the possible winning combinations.
+  // Check each winning combination
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
-    // Check if any of the winning combinations have been met.
+    // Return the winner ('X' or 'O') if found
     if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
       return squares[a];
     }
   }
-  // If no winner, return null.
+  // Return null if no winner
   return null;
 }
+
